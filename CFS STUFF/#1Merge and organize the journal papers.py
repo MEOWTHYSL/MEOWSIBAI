@@ -96,3 +96,4 @@ def save_to_excel(vx_files, zfb_files, output_file):
         vx_df.to_excel(writer, sheet_name='VX', index=False)
         zfb_df.to_excel(writer, sheet_name='ZFB', index=False)
 
+# 您可以使用save_to_excel函数并传入所有的VX和ZFB文件路径列表以及输出文件的路径，该函数将处理所有的文件并将其保存到一个Excel文件中。
