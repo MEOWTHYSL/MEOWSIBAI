@@ -1,0 +1,120 @@
+#------------------------------------------------------------------------------简单版
+
+#需手动处理：
+# 0.请确保 流水数据中报名中心员工姓名一致性！！！
+# 1.取消全部合并，取消换行，保存全部数值，确保时间格式一致
+# 2.把需要的备注名改为备注AI
+# 3.把需要处理的数据名改为 目标文件_编号_原文件名 的格式
+
+#需注意：
+#考虑到云端的保护性，我们可以依据本地AI跑出数据的时间进行依次更新，避免影响兄弟们的使用
+
+# 1.读取主文件和目标文件，其中第三行为列名。
+# 2.筛选主文件中"交易对方名称"这列为:杜会让 冯凯  付金波 蒋勇 焦新彤 李绍波 李迎超 刘典征 张静的数据。请注意"交易对方名称"不是"交易对方"
+# 3.筛选目标文件中"交易对方名称"这列为王慧茹的数据。
+#  4.寻找满足以下两条条件的数据：
+#条件1：主文件的交易单号数据去掉前两位后与目标文件的商户单号去掉前两位后相同。并且说明每个目标文件筛选出的匹配数据有多少。
+#条件2：主文件的"交易时间"与目标文件的"交易时间"相差不超过1天。主文件的"收入金额（元）"与目标文件的"支出金额（元）"相同。确保时间不会因为数据格式导致无法筛选，"交易时间"列中的某些数据在日期和时间之间没有空格，如"2020-12-0419:27:01"，这可能导致日期时间解析失败。
+# 5.创建一个新Excel文件，命名为主文件名+手动处理表，对满足任意一条条件的行,把数据存入这个新文件，请注意两条同时满足时只保存一次。
+
+
+#------------------------------------------------------------------------------高级版开发ing
+
+
+import pandas as pd
+
+# 主文件
+main_file_path = "/mnt/data/主文件8.王慧茹.xlsx"
+main_df = pd.read_excel(main_file_path, header=2)  # 由于第三行为列名，所以header=2
+
+# 目标文件列表
+target_files = [
+    "/mnt/data/目标文件1.杜会让.xlsx",
+    "/mnt/data/目标文件2.冯凯.xlsx",
+    "/mnt/data/目标文件3.付金波.xlsx",
+    "/mnt/data/目标文件5.蒋勇.xlsx",
+    "/mnt/data/目标文件6.焦新彤.xlsx",
+    "/mnt/data/目标文件7.李绍波.xlsx",
+    "/mnt/data/目标文件8.李迎超.xlsx",
+    "/mnt/data/目标文件9.刘典征.xlsx"
+]
+target_dfs = [pd.read_excel(file, header=2) for file in target_files]
+
+# 返回主文件和目标文件的前5行数据以供查看
+main_df.head(), target_dfs[0].head()  # 返回主文件和第一个目标文件的前5行数据
+
+# 筛选主文件中指定的"交易对方名称"
+names_to_filter = ["杜会让", "冯凯", "付金波", "蒋勇", "焦新彤", "李绍波", "李迎超", "刘典征", "张静"]
+filtered_main_df = main_df[main_df["交易对方名称"].isin(names_to_filter)]
+
+# 返回筛选后的前5行数据以供查看
+filtered_main_df.head()
+
+# 筛选目标文件中"交易对方名称"为王慧茹的数据
+filtered_target_dfs = [df[df["交易对方名称"] == "王慧茹"] for df in target_dfs]
+
+# 返回第一个筛选后的目标文件的前5行数据以供查看
+filtered_target_dfs[0].head()
+
+# 条件1的筛选结果
+results_condition_1 = []
+
+# 遍历每个筛选后的目标文件
+for idx, target_df in enumerate(filtered_target_dfs):
+    # 去掉交易单号和商户单号的前两位
+    main_transaction_ids = filtered_main_df["交易单号"].str[2:]
+    target_transaction_ids = target_df["交易单号"].str.split("\n").str[0].str[2:]
+    
+    # 找到匹配的交易单号
+    matched_df = filtered_main_df[main_transaction_ids.isin(target_transaction_ids)]
+    results_condition_1.append(matched_df)
+
+# 获取每个目标文件筛选出的匹配数据的数量
+matched_counts_condition_1 = [len(df) for df in results_condition_1]
+matched_counts_condition_1
+
+from datetime import datetime, timedelta
+
+# 处理日期时间格式问题，确保所有的时间数据都是正确的日期时间格式
+def fix_datetime_format(dt_string):
+    # 处理"2020-12-0419:27:01"这种格式
+    dt_string = dt_string.replace("\n", " ")  # 处理目标文件中的换行符
+    if len(dt_string.split(" ")) == 1:
+        dt_string = dt_string[:10] + " " + dt_string[10:]
+    return datetime.strptime(dt_string, '%Y-%m-%d %H:%M:%S')
+
+# 更新主文件和目标文件的交易时间列
+filtered_main_df["交易时间"] = filtered_main_df["交易时间"].apply(fix_datetime_format)
+for df in filtered_target_dfs:
+    df["交易时间"] = df["交易时间"].apply(fix_datetime_format)
+
+# 条件2的筛选结果
+results_condition_2 = []
+
+# 遍历每个筛选后的目标文件
+for target_df in filtered_target_dfs:
+    matched_rows = []
+    for _, main_row in filtered_main_df.iterrows():
+        for _, target_row in target_df.iterrows():
+            time_diff = abs(main_row["交易时间"] - target_row["交易时间"])
+            if time_diff <= timedelta(days=1) and main_row["收入金额（元）"] == target_row["支出金额（元）"]:
+                matched_rows.append(main_row)
+    results_condition_2.append(pd.DataFrame(matched_rows))
+
+# 获取每个目标文件筛选出的匹配数据的数量
+matched_counts_condition_2 = [len(df) for df in results_condition_2]
+matched_counts_condition_2
+
+# 读取手动表文件
+manual_table_path = "/mnt/data/手动表.xlsx"
+manual_table_df = pd.read_excel(manual_table_path, header=2)
+
+# 将满足条件的数据添加到手动表中
+for i in range(len(target_files)):
+    # 合并满足条件1和条件2的数据
+    combined_df = pd.concat([results_condition_1[i], results_condition_2[i]]).drop_duplicates()
+    manual_table_df = pd.concat([manual_table_df, combined_df])
+
+# 保存手动表文件
+manual_table_df.to_excel("/mnt/data/updated_手动表.xlsx", index=False)
+"/mnt/data/updated_手动表.xlsx"
