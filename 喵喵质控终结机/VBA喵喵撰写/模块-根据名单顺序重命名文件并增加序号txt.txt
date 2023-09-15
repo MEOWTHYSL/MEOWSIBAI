@@ -1,0 +1,37 @@
+Sub 重命名文件夹()
+
+    Dim ws As Worksheet
+    Dim rng As Range
+    Dim cell As Range
+    Dim folderPath As String
+    Dim folderName As String
+    Dim newName As String
+    Dim counter As Long
+    Dim fso As Object
+
+    ' 设置文件夹路径
+    folderPath = "C:\Users\SIYU\Desktop\第一步文件件\"
+    
+    ' 获取当前活动工作表
+    Set ws = ThisWorkbook.ActiveSheet
+    ' 设置范围为列A中的所有单元格
+    Set rng = ws.Range("A1:A" & ws.Cells(ws.Rows.Count, 1).End(xlUp).Row)
+    
+    ' 创建文件系统对象
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+    counter = 1 ' 设置初始序号
+
+    ' 对于每一个名字，重命名匹配的文件夹
+    For Each cell In rng
+        folderName = cell.Value
+        If fso.FolderExists(folderPath & folderName) Then
+            newName = folderPath & CStr(counter) & "-" & folderName
+            On Error Resume Next
+            fso.MoveFolder folderPath & folderName, newName
+            On Error GoTo 0
+            counter = counter + 1 ' 增加序号
+        End If
+    Next cell
+
+End Sub

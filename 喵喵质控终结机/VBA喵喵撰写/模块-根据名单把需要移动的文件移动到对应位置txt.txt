@@ -1,0 +1,38 @@
+Sub 移动匹配的PDF文件()
+
+    Dim ws As Worksheet
+    Dim rng As Range
+    Dim cell As Range
+    Dim sourceFolderPath As String
+    Dim destinationBasePath As String
+    Dim fileName As String
+    Dim folderName As String
+    Dim fso As Object
+
+    ' 设置文件夹路径
+    sourceFolderPath = "C:\Users\SIYU\Desktop\移\"
+    destinationBasePath = "C:\Users\SIYU\Desktop\总\20220807\"
+    
+    ' 获取当前活动工作表
+    Set ws = ThisWorkbook.ActiveSheet
+    ' 设置范围为列A中的所有单元格
+    Set rng = ws.Range("A1:A" & ws.Cells(ws.Rows.Count, 1).End(xlUp).Row)
+    
+    ' 创建文件系统对象
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+    ' 对于每一个名字，移动匹配的PDF文件到相应的子文件夹
+    For Each cell In rng
+        fileName = cell.Value & ".pdf" ' 添加.pdf扩展名
+        folderName = cell.Value
+        If fso.FileExists(sourceFolderPath & fileName) And fso.FolderExists(destinationBasePath & folderName) Then
+            On Error GoTo ErrorHandler
+            fso.MoveFile sourceFolderPath & fileName, destinationBasePath & folderName & "\" & fileName
+            On Error GoTo 0
+        End If
+    Next cell
+    Exit Sub
+
+ErrorHandler:
+    MsgBox "发生错误: " & Err.Description, vbCritical, "错误"
+End Sub

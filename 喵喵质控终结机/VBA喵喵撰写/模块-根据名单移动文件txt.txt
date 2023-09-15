@@ -1,0 +1,34 @@
+Sub 移动相同名字的文件夹()
+
+    Dim ws As Worksheet
+    Dim rng As Range
+    Dim cell As Range
+    Dim sourceFolderPath As String
+    Dim destinationFolderPath As String
+    Dim folderName As String
+    Dim fso As Object
+
+    ' 设置文件夹路径
+    sourceFolderPath = "C:\Users\SIYU\Desktop\第一步\"
+    destinationFolderPath = "C:\Users\SIYU\Desktop\总\20230603\"
+    
+    ' 获取当前活动工作表
+    Set ws = ThisWorkbook.ActiveSheet
+    ' 设置范围为列A中的所有单元格
+    Set rng = ws.Range("A1:A" & ws.Cells(ws.Rows.Count, 1).End(xlUp).Row)
+    
+    ' 创建文件系统对象
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+    ' 对于每一个名字，移动匹配的文件夹
+    For Each cell In rng
+        folderName = cell.Value
+        If fso.FolderExists(sourceFolderPath & folderName) Then
+            On Error Resume Next
+            fso.MoveFolder sourceFolderPath & folderName, destinationFolderPath
+            On Error GoTo 0
+        End If
+    Next cell
+
+End Sub
+

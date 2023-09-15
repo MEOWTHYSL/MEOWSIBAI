@@ -1,0 +1,28 @@
+Sub RenameSheetsFromA2()
+    Dim LastRow As Long
+    Dim i As Integer
+    Dim wsSource As Worksheet
+    Dim sheetName As String
+
+    ' 设置源工作表
+    Set wsSource = ThisWorkbook.Sheets("源工作表")
+
+    ' 确定在列B中有数据的最后一行
+    LastRow = wsSource.Cells(wsSource.Rows.Count, "B").End(xlUp).Row
+
+    ' 对于每一行，从2开始到最后一行
+    For i = 2 To LastRow
+        On Error Resume Next
+        ' 获取B列的值作为工作表名称
+        sheetName = wsSource.Cells(i, 2).Value
+        
+        ' 跟随A列的超链接
+        If wsSource.Cells(i, 1).Hyperlinks.Count > 0 Then
+            wsSource.Cells(i, 1).Hyperlinks(1).Follow
+            ' 使用从B列获取的值重命名工作表
+            ActiveSheet.Name = sheetName
+        End If
+        On Error GoTo 0
+    Next i
+End Sub
+

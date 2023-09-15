@@ -1,0 +1,29 @@
+Sub 删除相同名字的文件夹()
+
+    Dim ws As Worksheet
+    Dim rng As Range
+    Dim cell As Range
+    Dim folderPath As String
+    Dim folderName As String
+    
+    ' 设定文件夹路径
+    folderPath = "C:\Users\SIYU\Desktop\第一步\"
+    
+    ' 获取当前活动工作表
+    Set ws = ThisWorkbook.ActiveSheet
+    ' 设定范围为列A中的所有单元格
+    Set rng = ws.Range("A1:A" & ws.Cells(ws.Rows.Count, 1).End(xlUp).Row)
+    
+    ' 对于每一个名字，删除相应的文件夹
+    For Each cell In rng
+        folderName = cell.Value
+        If Dir(folderPath & folderName, vbDirectory) <> "" Then
+            On Error Resume Next
+            Kill folderPath & folderName & "\*.*" ' 删除文件夹中的所有文件
+            RmDir folderPath & folderName ' 删除文件夹
+            On Error GoTo 0
+        End If
+    Next cell
+
+End Sub
+
